@@ -7,4 +7,5 @@ require (
 	github.com/lib/pq v1.10.9 // indirect
 	github.com/paulmach/orb v0.11.1 // indirect
 	github.com/rs/cors v1.11.1 // indirect
+	go.mongodb.org/mongo-driver v1.17.3 // indirect
 )
