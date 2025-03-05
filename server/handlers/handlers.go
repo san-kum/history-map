@@ -145,3 +145,53 @@ func CreateMap(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
+func UpdateMap(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	idStr := vars["id"]
+
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Invalid map ID", http.StatusBadRequest)
+		return
+	}
+	var updatedMap db.HistoricalMap
+	if err := json.NewDecoder(r.Body).Decode(&updatedMap); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+	// convert orb.Polygon to GeoJSON
+	gj := geojson.NewGeometry(updatedMap.Bounds)
+	boundJSON, err := gj.MarshalJSON()
+	if err != nil {
+		http.Error(w, "Error marshalling bounds to JSON", http.StatusInternalServerError)
+		return
+	}
+
+	query := `
+        UPDATE historical_maps
+        SET name = $1, year = $2, image_path = $3, bounds = ST_GeomFromGeoJSON($4)
+        WHERE id = $5
+    `
+
+	result, err := db.GetDB().Exec(query, updatedMap.Name, updatedMap.Year, updatedMap.ImagePath, boundJSON, id)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Database update error", http.StatusInternalServerError)
+		return
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Database error", http.StatusInternalServerError)
+		return
+	}
+	if rowsAffected == 0 {
+		http.Error(w, "Map not found", http.StatusNotFound)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+
+}
