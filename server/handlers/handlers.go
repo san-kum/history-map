@@ -195,3 +195,35 @@ func UpdateMap(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 
 }
+
+func DeleteMap(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	idStr := vars["id"]
+
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Invalid map ID", http.StatusBadRequest)
+		return
+	}
+	// Delete the map from db
+	query := `DELETE FROM historical_maps WHERE id = $1`
+	result, err := db.GetDB().Exec(query, id)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Database delete error", http.StatusInternalServerError)
+		return
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		log.Println(w, "Database error", http.StatusInternalServerError)
+		return
+	}
+	if rowsAffected == 0 {
+		http.Error(w, "Map not found", http.StatusNotFound)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+
+}

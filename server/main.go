@@ -21,6 +21,7 @@ func main() {
 	router.HandleFunc("/maps/{id}", handlers.GetMapByID).Methods("GET")
 	router.HandleFunc("/maps", handlers.CreateMap).Methods("POST")
 	router.HandleFunc("/maps/{id}", handlers.UpdateMap).Methods("PUT")
+	router.HandleFunc("/maps/{id}", handlers.DeleteMap).Methods("DELETE")
 
 	handler := cors.Default().Handler(router)
 
